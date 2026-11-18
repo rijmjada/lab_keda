@@ -106,7 +106,7 @@ scaledobject.yaml          consumer-scaler
 ## Publicar el repositorio
 
 Argo CD clona el repositorio desde dentro del clúster, así que **tiene que estar en GitHub**. El
-laboratorio asume `https://github.com/diegodevopsorg/lab-keda.git` (cámbialo en `bootstrap\_comun.ps1`,
+laboratorio asume `https://github.com/rijmjada/lab_keda.git` (cámbialo en `bootstrap\_comun.ps1`,
 `bootstrap\root-app.yaml` y `app-manager\*.yaml` si usas otro nombre).
 
 ```powershell
@@ -114,7 +114,7 @@ cd C:\Users\diego\OneDrive\Escritorio\lab_keda
 git init -b main
 git add .
 git commit -m "Laboratorio KEDA con GitOps"
-git remote add origin https://github.com/diegodevopsorg/lab-keda.git
+git remote add origin https://github.com/rijmjada/lab_keda.git
 git push -u origin main
 ```
 

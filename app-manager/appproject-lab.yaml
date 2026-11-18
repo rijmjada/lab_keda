@@ -9,7 +9,7 @@ metadata:
 spec:
   description: Laboratorio KEDA
   sourceRepos:
-    - https://github.com/diegodevopsorg/lab-keda.git       # sólo puede desplegar desde este repo
+    - https://github.com/rijmjada/lab_keda.git       # sólo puede desplegar desde este repo
   destinations:
     - server: https://kubernetes.default.svc               # el mismo cluster donde corre Argo CD
       namespace: '*'                                       # en cualquier namespace

@@ -10,7 +10,7 @@ $WorkerImage      = 'keda-demo-worker:1.0'
 
 # Repositorio que vigila Argo CD. Es el MISMO valor que hay en bootstrap\root-app.yaml y en
 # app-manager\*.yaml (si cambias de organización o de nombre, cámbialo en los cuatro sitios).
-$RepoUrl          = 'https://github.com/diegodevopsorg/lab-keda.git'
+$RepoUrl          = 'https://github.com/rijmjada/lab_keda.git'
 
 # Puertos distintos a los de los otros labs (KEDA 8080/15672, VPA 8081-8082, Knative 8083-8084,
 # Prometheus 8085-8087).

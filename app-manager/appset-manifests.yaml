@@ -12,7 +12,7 @@ spec:
   # la Application lleva el finalizer y dar de baja una demo (enabled: "false") la limpia entera.
   generators:
     - git:
-        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        repoURL: https://github.com/rijmjada/lab_keda.git
         revision: main
         files:
           - path: 'platform/manifests/*/platform.yaml'  # una carpeta con manifiestos = una Application
@@ -29,7 +29,7 @@ spec:
     spec:
       project: lab                                      # el AppProject del laboratorio
       source:
-        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        repoURL: https://github.com/rijmjada/lab_keda.git
         targetRevision: main
         path: 'platform/manifests/{{ .name }}'
         directory:

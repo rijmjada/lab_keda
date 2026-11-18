@@ -11,7 +11,7 @@ spec:
     preserveResourcesOnDeletion: true                # borrar una carpeta elimina la Application pero NO los recursos: borrar KEDA borraría sus CRDs y con ellos todos los ScaledObject del cluster
   generators:
     - git:
-        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        repoURL: https://github.com/rijmjada/lab_keda.git
         revision: main
         files:
           - path: 'platform/charts/*/platform.yaml'  # cada carpeta es un chart "envoltorio" con la dependencia oficial y su versión fija
@@ -26,7 +26,7 @@ spec:
     spec:
       project: lab                                   # el AppProject con permisos para crear CRDs y namespaces
       source:
-        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        repoURL: https://github.com/rijmjada/lab_keda.git
         targetRevision: main
         path: 'platform/charts/{{ .name }}'
         helm:

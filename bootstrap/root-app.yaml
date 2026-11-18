@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/diegodevopsorg/lab-keda.git
+    repoURL: https://github.com/rijmjada/lab_keda.git
     targetRevision: main
     path: app-manager
   destination:
