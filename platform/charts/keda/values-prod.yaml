@@ -1,0 +1,2 @@
+# Valores del entorno. Por ahora se usan los valores por defecto del chart.
+keda: {}                   # acá van los ajustes (réplicas del operator, recursos, restringir Secrets, etc.)

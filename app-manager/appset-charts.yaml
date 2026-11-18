@@ -1,0 +1,66 @@
+# Componentes instalados con Helm: una Application por cada archivo platform/charts/*/platform.yaml. Ej: KEDA.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: lab-charts
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]            # si falta un dato en platform.yaml, falla en vez de generar algo a medias
+  syncPolicy:
+    preserveResourcesOnDeletion: true                # borrar una carpeta elimina la Application pero NO los recursos: borrar KEDA borraría sus CRDs y con ellos todos los ScaledObject del cluster
+  generators:
+    - git:
+        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        revision: main
+        files:
+          - path: 'platform/charts/*/platform.yaml'  # cada carpeta es un chart "envoltorio" con la dependencia oficial y su versión fija
+      selector:
+        matchLabels:
+          enabled: "true"                            # sólo las que tienen enabled: "true"
+  template:
+    metadata:
+      name: 'lab-{{ .name }}'                        # ej: lab-keda
+      labels:
+        tipo: platform
+    spec:
+      project: lab                                   # el AppProject con permisos para crear CRDs y namespaces
+      source:
+        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        targetRevision: main
+        path: 'platform/charts/{{ .name }}'
+        helm:
+          valueFiles:
+            - values.yaml                            # valores comunes
+            - values-prod.yaml                       # valores del entorno
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'
+      # KEDA genera y rota sus propios certificados en runtime y escribe el caBundle en el
+      # APIService de las métricas externas y en el webhook de validación. Si Argo CD comparara
+      # esos campos, la app quedaría OutOfSync para siempre y selfHeal rompería las métricas.
+      # Sólo aplica a los recursos de esos tipos: no afecta a otros charts.
+      ignoreDifferences:
+        - group: apiregistration.k8s.io
+          kind: APIService
+          jsonPointers:
+            - /spec/caBundle
+            - /spec/insecureSkipTLSVerify
+        - group: admissionregistration.k8s.io
+          kind: ValidatingWebhookConfiguration
+          jqPathExpressions:
+            - .webhooks[]?.clientConfig.caBundle
+      syncPolicy:
+        automated:
+          prune: true                                # elimina del cluster lo que se quitó de Git
+          selfHeal: true                             # revierte los cambios manuales hechos en el cluster
+        syncOptions:
+          - CreateNamespace=true                     # crea el namespace si no existe
+          - ServerSideApply=true                     # las CRDs de KEDA superan el límite de 256 KB de la anotación del apply normal
+          - RespectIgnoreDifferences=true            # tampoco pisa esos campos al sincronizar
+        retry:
+          limit: 10                                  # reintenta hasta 10 veces
+          backoff:
+            duration: 30s                            # espera inicial entre reintentos
+            factor: 2                                # la espera se duplica en cada reintento
+            maxDuration: 5m                          # tope de espera

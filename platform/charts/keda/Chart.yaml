@@ -1,0 +1,9 @@
+apiVersion: v2
+name: platform-keda                              # chart envoltorio: sólo declara la dependencia oficial
+description: Envoltorio de KEDA (autoescalado dirigido por eventos)
+type: application
+version: 0.1.0                                   # versión del envoltorio (no la de KEDA)
+dependencies:
+  - name: keda                                   # chart oficial de KEDA
+    version: 2.21.1                              # versión fija: se sube con un commit, nunca sola (Chart.lock la congela)
+    repository: https://kedacore.github.io/charts

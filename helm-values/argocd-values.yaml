@@ -1,0 +1,12 @@
+# Valores mínimos de Argo CD para un laboratorio en minikube.
+configs:
+  params:
+    # Sirve la UI por HTTP plano (sin TLS) para usar port-forward sin certificados.
+    server.insecure: true
+
+# Componentes que no usamos en el laboratorio: se desactivan para ahorrar recursos.
+dex:
+  enabled: false
+notifications:
+  enabled: false
+# El ApplicationSet controller queda habilitado (es el que genera las Applications).

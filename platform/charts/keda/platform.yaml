@@ -1,0 +1,4 @@
+# Datos para el ApplicationSet (NO es un manifiesto de Kubernetes).
+name: keda                 # genera la Application "lab-keda"
+enabled: "true"            # "false" = no se instala
+namespace: keda            # namespace de destino

@@ -1,0 +1,39 @@
+# La carga de trabajo. Arranca en 0 réplicas: KEDA es dueño de spec.replicas
+# (Argo CD ignora ese campo: ver ignoreDifferences en app-manager/appset-manifests.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer                  # <- lo referencia scaledobject.yaml (scaleTargetRef.name)
+  labels:
+    app: consumer
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: consumer
+          image: keda-demo-worker:1.0
+          imagePullPolicy: Never      # imagen construida dentro de minikube (bootstrap\03-construir-imagen.ps1)
+          env:
+            - name: RABBITMQ_HOST     # el consumer habla AMQP (5672) con el Service "rabbitmq"
+              value: rabbitmq         # nombre corto: está en el mismo namespace
+            - name: QUEUE_NAME
+              value: tareas           # ¡debe coincidir con queueName del ScaledObject!
+            - name: PROCESS_SECONDS
+              value: "2"              # EXPERIMENTA: más lento = más réplicas necesarias
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef: {name: rabbitmq-credentials, key: username}
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: rabbitmq-credentials, key: password}
+          resources:
+            requests: {cpu: 20m, memory: 48Mi}
+            limits: {memory: 96Mi}

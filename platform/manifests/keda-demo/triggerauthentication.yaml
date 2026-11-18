@@ -1,0 +1,12 @@
+# Cómo se autentica el scaler. Separa la conexión del ScaledObject: la regla de escalado
+# no contiene ningún dato sensible, solo referencia esta autenticación por nombre.
+# Un ScaledObject puede reutilizar la misma TriggerAuthentication.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-auth             # <- lo referencia scaledobject.yaml (authenticationRef.name)
+spec:
+  secretTargetRef:
+    - parameter: host             # nombre del parámetro que ESPERA el scaler de RabbitMQ
+      name: keda-rabbitmq-host    # Secret del que se lee (secret-keda-host.yaml)
+      key: host                   # clave dentro de ese Secret

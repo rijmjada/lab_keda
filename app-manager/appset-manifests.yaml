@@ -1,0 +1,62 @@
+# Cargas en YAML plano (sin Helm): una Application por cada archivo platform/manifests/*/platform.yaml.
+# Ej: RabbitMQ y la demo de KEDA (consumer + ScaledObject).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: lab-manifests
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]               # si falta un dato en platform.yaml, falla en vez de generar algo a medias
+  # A diferencia de lab-charts, aquí NO se conservan los recursos al borrar una carpeta:
+  # la Application lleva el finalizer y dar de baja una demo (enabled: "false") la limpia entera.
+  generators:
+    - git:
+        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        revision: main
+        files:
+          - path: 'platform/manifests/*/platform.yaml'  # una carpeta con manifiestos = una Application
+      selector:
+        matchLabels:
+          enabled: "true"                               # sólo las que tienen enabled: "true"
+  template:
+    metadata:
+      name: 'lab-{{ .name }}'                           # ej: lab-keda-demo
+      labels:
+        tipo: manifests
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io        # al dar de baja la carpeta se eliminan sus recursos
+    spec:
+      project: lab                                      # el AppProject del laboratorio
+      source:
+        repoURL: https://github.com/diegodevopsorg/lab-keda.git
+        targetRevision: main
+        path: 'platform/manifests/{{ .name }}'
+        directory:
+          exclude: 'platform.yaml'                      # son datos para el ApplicationSet, no un manifiesto de Kubernetes
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .namespace }}'                   # los manifiestos no declaran namespace: caen aquí
+      # El HPA que KEDA crea modifica spec.replicas del Deployment. Sin esto, Argo CD vería el
+      # Deployment OutOfSync y selfHeal lo devolvería a 0 en cada reconciliación (el consumer
+      # declara replicas: 0 y KEDA es el dueño de ese número).
+      # Simplificación del lab: aplica a todos los Deployments de este ApplicationSet.
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas
+      syncPolicy:
+        automated:
+          prune: true                                   # elimina del cluster lo que se quitó de Git
+          selfHeal: true                                # revierte los cambios manuales hechos en el cluster
+        syncOptions:
+          - CreateNamespace=true                        # crea el namespace si no existe
+          - RespectIgnoreDifferences=true               # tampoco pisa spec.replicas al sincronizar
+          - SkipDryRunOnMissingResource=true            # no falla si todavía no existe el CRD (llega desde lab-charts)
+        retry:                                          # los ApplicationSets no ordenan sus Applications: reintenta hasta que existan los CRDs de KEDA
+          limit: 10                                     # reintenta hasta 10 veces
+          backoff:
+            duration: 30s                               # espera inicial entre reintentos
+            factor: 2                                   # la espera se duplica en cada reintento
+            maxDuration: 5m                             # tope de espera

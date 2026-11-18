@@ -1,0 +1,12 @@
+# Dependencias de Helm descargadas. Argo CD las baja solo a partir de Chart.yaml + Chart.lock.
+platform/charts/*/charts/
+*.tgz
+
+# Caché de Python
+__pycache__/
+
+# Tokens: NUNCA se suben a Git
+.env
+
+# PIDs de los port-forward que abren los scripts
+.port-forward.pids

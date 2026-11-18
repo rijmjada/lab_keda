@@ -1,0 +1,4 @@
+# Datos para el ApplicationSet (NO es un manifiesto de Kubernetes).
+name: keda-demo            # genera la Application "lab-keda-demo"
+enabled: "true"            # "false" = se da de baja (Application y recursos eliminados)
+namespace: keda-demo       # namespace de destino

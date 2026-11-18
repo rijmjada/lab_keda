@@ -1,0 +1,40 @@
+# Declara la cola "tareas" apenas RabbitMQ está sano.
+#
+# Sin esto, el scaler de KEDA (protocol: http) consulta /api/queues/%2F/tareas, recibe
+# 404 y el ScaledObject queda Ready=False. Normalmente la cola la declara el consumer,
+# pero está en 0 réplicas esperando que KEDA lo despierte: el huevo y la gallina del
+# scale-to-zero. En producción la declara la infraestructura, nunca el consumer escalado a 0.
+#
+# Es un Job NORMAL con sync-wave 1 (no un hook PostSync): los hooks no forman parte del
+# estado deseado, así que no dejan la app OutOfSync y el auto-sync nunca los ejecutaría.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: declarar-cola-tareas
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"     # después del Deployment y el Service (wave 0)
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: declarar
+          image: curlimages/curl:8.11.1
+          env:
+            - name: USER
+              valueFrom:
+                secretKeyRef: {name: rabbitmq-credentials, key: username}
+            - name: PASS
+              valueFrom:
+                secretKeyRef: {name: rabbitmq-credentials, key: password}
+          command: ["sh", "-c"]
+          args:
+            - |
+              until curl -sf -u "$USER:$PASS" http://rabbitmq:15672/api/overview > /dev/null; do
+                echo "esperando la API de management..."; sleep 3
+              done
+              curl -sf -u "$USER:$PASS" -X PUT -H 'content-type: application/json' \
+                -d '{"durable":true,"auto_delete":false}' \
+                http://rabbitmq:15672/api/queues/%2F/tareas
+              echo "cola 'tareas' declarada"

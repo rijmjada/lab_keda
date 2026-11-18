@@ -1,0 +1,21 @@
+# AppProject del laboratorio: perímetro de permisos de KEDA, RabbitMQ y la demo.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: lab                                                # lo usan las Applications generadas con "project: lab"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"                     # se crea antes que las Applications que lo usan
+spec:
+  description: Laboratorio KEDA
+  sourceRepos:
+    - https://github.com/diegodevopsorg/lab-keda.git       # sólo puede desplegar desde este repo
+  destinations:
+    - server: https://kubernetes.default.svc               # el mismo cluster donde corre Argo CD
+      namespace: '*'                                       # en cualquier namespace
+  clusterResourceWhitelist:
+    - group: '*'                                           # puede crear recursos de cluster: namespaces, CRDs, ClusterRoles (KEDA los necesita)
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'                                           # y cualquier recurso dentro de un namespace
+      kind: '*'

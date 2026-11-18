@@ -1,0 +1,36 @@
+# La regla de escalado. Es el archivo que más vas a editar en los experimentos:
+#   editar -> git commit -> git push -> Refresh en Argo CD (o bootstrap\refrescar.ps1)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: consumer-scaler
+  # Para PAUSAR el escalado, descomenta (ver README, experimento "pausar"):
+  # annotations:
+  #   autoscaling.keda.sh/paused-replicas: "0"   # pausa y fija las réplicas en 0 (o en N)
+spec:
+  scaleTargetRef:
+    name: consumer                # <- Deployment consumer (deployment-consumer.yaml)
+  pollingInterval: 5              # cada cuántos segundos KEDA consulta la cola
+  cooldownPeriod: 30              # segundos sin actividad antes de volver a 0
+  minReplicaCount: 0              # permite scale-to-zero
+  maxReplicaCount: 10             # EXPERIMENTA: techo de réplicas
+  advanced:                       # configuración del HPA que KEDA crea
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 15
+          policies:
+            - type: Percent       # baja un porcentaje de las réplicas...
+              value: 50           # ...el 50 %...
+              periodSeconds: 10   # ...cada 10 s
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: http            # API de management (15672): cuenta ready + unacked
+        queueName: tareas         # ¡debe coincidir con QUEUE_NAME del consumer!
+        vhostName: /
+        mode: QueueLength
+        value: "10"               # EXPERIMENTA: mensajes objetivo por réplica
+        activationValue: "0"      # > 0 mensajes => despierta de 0 a 1
+      authenticationRef:
+        name: rabbitmq-auth       # <- TriggerAuthentication (triggerauthentication.yaml)

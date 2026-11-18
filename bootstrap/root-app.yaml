@@ -1,0 +1,20 @@
+# Única Application que no sale de un ApplicationSet. La aplica 04-desplegar-lab.ps1 (no se aplica a mano).
+# Sincroniza app-manager/: el AppProject del laboratorio y los dos ApplicationSets.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app-manager
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/diegodevopsorg/lab-keda.git
+    targetRevision: main
+    path: app-manager
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:          # Sincroniza automáticamente cuando detecta diferencias.
+      prune: true       # Elimina recursos administrados que fueron quitados del repositorio Git.
+      selfHeal: true    # Revierte cambios manuales realizados directamente en Kubernetes cuando difieren de Git.
